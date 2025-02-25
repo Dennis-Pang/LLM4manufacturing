@@ -4,7 +4,7 @@ backend/.env
 # 忽略数据和文档目录
 backend/mappings
 backend/VectorDBs
-backend/pdf
+backend/pdfs
 backend/markdowns
 backend/washed_documents
 

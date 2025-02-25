@@ -66,7 +66,7 @@ flowchart TD
   QUESTION_TYPES = [
       "parameter_recommendation",
       "picture_reference",
-      "introduction",
+      "web_search",
       "unknown"
   ]
   ```
@@ -165,17 +165,33 @@ flowchart TD
 ## 📝 Usage Example
 ```python
 from RAG import RAG
-Create query
+# Create query
 query = "What's the cutting speed for turning 1.4125 with D10?"
-Execute workflow
+# Execute workflow
 result = RAG.invoke(query, config={
 "configurable": {
 "thread_id": "unique_id"
 }
-})```
+})
+```
 
+### Query Example
+```
+I wanna machine 1.4125 with D10, cutting speed?
+```
 
-## 🔑 Environment Setup
+### System Response
+```
+Recommendations:
+
+- Cutting Speed for 1.4125 Steel with D10 Tool:
+  - Metal Source: 20-30 m/min
+  - Tool Source: 60-120 m/min
+
+Reasoning: The metal source suggests a cutting speed of 20-30 m/min for 1.4125 steel, which is a martensitic stainless steel with high hardness and wear resistance, making it difficult to machine. The tool source, however, recommends a higher range of 60-120 m/min for stainless steel using a D10 tool. Due to the conflicting ranges, both are presented, and the more conservative metal source range should be considered to ensure tool longevity and prevent excessive wear.
+```
+
+## �� Environment Setup
 
 1. Create `.env` file:
    ```

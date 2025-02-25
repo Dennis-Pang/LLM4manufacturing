@@ -21,6 +21,12 @@ flowchart TD
     LLM1 --> Router[Query Router]
     Router --> |Other Types| Other[Other Processing Flows]
     Router --> |Parameter Recommendation| B[Factor Check]
+    Router --> |Web Search| WebSearch[Web Search]
+    
+    WebSearch --> WebAPI[Search API Call]
+    WebAPI --> WebResults[Filter Results]
+    WebResults --> WebSummary[Summarize Information]
+    WebSummary --> X[Final Response]
     
     B -->|Missing Factors| C[Request More Info]
     B -->|Complete| D[Parallel Processing]
@@ -161,6 +167,8 @@ flowchart TD
 - ChromaDB: Vector storage
 - Pydantic: Data validation
 - RapidFuzz: Fuzzy matching
+- Tavily: Web search API
+
 
 ## 📝 Usage Example
 ```python
@@ -191,11 +199,10 @@ Recommendations:
 Reasoning: The metal source suggests a cutting speed of 20-30 m/min for 1.4125 steel, which is a martensitic stainless steel with high hardness and wear resistance, making it difficult to machine. The tool source, however, recommends a higher range of 60-120 m/min for stainless steel using a D10 tool. Due to the conflicting ranges, both are presented, and the more conservative metal source range should be considered to ensure tool longevity and prevent excessive wear.
 ```
 
-## �� Environment Setup
+## 🛠️ Environment Setup
 
 1. Create `.env` file:
-   ```
-   OPENAI_API_KEY=your_api_key_here
+   ```   OPENAI_API_KEY=your_api_key_here
    ```
 
 2. Required directory structure:
@@ -208,6 +215,7 @@ Reasoning: The metal source suggests a cutting speed of 20-30 m/min for 1.4125 s
    ├── washed_documents/
    └── markdowns/
    ```
+
 
 
 

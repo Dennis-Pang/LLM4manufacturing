@@ -17,4 +17,5 @@ def tool_search(llm,query):
     if len(filtered_reference) != 0:
         return filtered_reference
     else:
-        return "After filtering, no valid TOOL references were found in the document. Please double check your query."
+        return None
+

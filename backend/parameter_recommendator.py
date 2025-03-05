@@ -5,6 +5,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from typing_extensions import Literal
 from pydantic import BaseModel, Field
 from langgraph.types import interrupt
+from online_search import online_search
 
 class Check(BaseModel):
     judge: Literal["yes","no"] = Field(
@@ -22,8 +23,6 @@ class Check(BaseModel):
     questioned_parameters: str = Field(
         description="The questioned parameters if it exists in the query, None if not.",
     )
-    
-    
 
 @task
 def factors_check(llm, query):
@@ -70,6 +69,9 @@ def factors_check(llm, query):
     return result
 
 class Answer(BaseModel):
+    questioned_parameter: str = Field(
+        description="The questioned parameter",
+    )
     tool_range: str = Field(
         description="The range of tool's parameter recommendation, None if not.",
     )
@@ -86,16 +88,16 @@ class Answer(BaseModel):
         If there is conflicted parameters between tool and metal, give a brief explanation and make a suggestion based both sources and your own knowledge.
         """,
     )
-
     
 @task
 def parameter_recommendation(llm, query: str):
     """参数推荐主函数"""
+    llm = llm.bind_tools([online_search])
     check = factors_check(llm, query).result()
     if check.judge == "no":
         print("Please provide a complete query with operation, metal and tool information.")
         return 
-
+    
     print("-- Start to generate parameter recommendation:\n")
     metal_name = check.metal
 
@@ -112,13 +114,15 @@ def parameter_recommendation(llm, query: str):
 
     # 搜索工具参考
     tool_refs = tool_search(llm, query)
-    if isinstance(tool_refs, str):
-        return "No valid tool references found, please check your query.", False
+    if tool_refs is None:
+        print("No valid tool references found.")
 
     # 合并参考信息
     references = [metal_doc] if metal_doc else []
-    references.extend(tool_refs)
+    references.extend(tool_refs or [])
 
+    llm = llm.bind_tools([online_search])
+    
     # 创建对话历史列表
     messages = [
         SystemMessage(content="""
@@ -189,32 +193,34 @@ def parameter_recommendation(llm, query: str):
     response = llm.with_structured_output(Answer).invoke(messages)
 
     llm_response =   f"""
-    🛠️ Tool's source: {response.tool_range}
+    🔍 Questioned parameter: {response.questioned_parameter}
     🔧 Metal's source: {response.metal_range}
+    🛠️  Tool's source: {response.tool_range}
     🎯 Combined range: {response.combined_range}
     💭 RagBot's thoughts: {response.thoughts}
     """ 
     print("\n🤖 RagBot's Answer:\n\n", llm_response)
+    return response
     
-    while True:
-        is_approved = input("\nPlease say 'yes' if the answer is satisfactory, otherwise just provide additional information:").lower().strip()
-        if is_approved == "yes":
-            return llm_response, True
+    # while True:
+    #     is_approved = input("\nPlease say 'yes' if the answer is satisfactory, otherwise just provide additional information:").lower().strip()
+    #     if is_approved == "yes":
+    #         return llm_response, True
         
-        # 将用户反馈添加到对话历史
-        messages.append(HumanMessage(content=is_approved))
-        # 添加助手回答到对话历史
-        messages.append(SystemMessage(content="""
-        Based on your feedback, I will:
-        1. If you provided additional specifications: Narrow down the parameter ranges accordingly
-        2. If you asked about other aspects: Provide additional insights based on manufacturing expertise
-        3. If you pointed out issues: Correct and clarify the previous recommendations
-        No need to provide the previous answer.
-        No format for the answer, just provide the answer in a concise and clear manner.
-        """))
+    #     # 将用户反馈添加到对话历史
+    #     messages.append(HumanMessage(content=is_approved))
+    #     # 添加助手回答到对话历史
+    #     messages.append(SystemMessage(content="""
+    #     Based on your feedback, I will:
+    #     1. If you provided additional specifications: Narrow down the parameter ranges accordingly
+    #     2. If you asked about other aspects: Provide additional insights based on manufacturing expertise
+    #     3. If you pointed out issues: Correct and clarify the previous recommendations
+    #     No need to provide the previous answer.
+    #     No format for the answer, just provide the answer in a concise and clear manner.
+    #     """))
         
-        # 使用完整对话历史获取新回答
-        llm_response = llm.invoke(messages).content
-        print("\n🤖 Updated Answer:\n", llm_response)
+    #     # 使用完整对话历史获取新回答
+    #     llm_response = llm.invoke(messages).content
+    #     print("\n🤖 Updated Answer:\n", llm_response)
     
 

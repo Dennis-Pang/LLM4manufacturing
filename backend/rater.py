@@ -12,6 +12,7 @@ class Feedback(BaseModel):
         None, description="Decide if the reference is relevant or not."
     )
 
+
 @task
 def rating(llm, reference: str, query: str):
     evaluator1 = llm.with_structured_output(Feedback)
@@ -54,10 +55,10 @@ def rating(llm, reference: str, query: str):
     decision1 = evaluate(evaluator1)
     
     # 如果第一个评估结果为"not relevant"，直接返回False
-    if decision1.judge == "not relevant":
-        return False
+    if decision1.judge == "relevant":
+        return True ## 如果第一个评估结果为"relevant"，直接返回True
         
-    # 只有当第一个评估结果为"relevant"时，才运行第二个评估
+    # 只有当第一个评估结果为"not relevant"时，才运行第二个评估
     decision2 = evaluate(evaluator2)
     
     return decision2.judge == "relevant"

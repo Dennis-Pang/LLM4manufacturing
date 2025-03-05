@@ -1,7 +1,10 @@
 from tavily import TavilyClient
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
+from langchain_core.tools import tool
+
 client = TavilyClient("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")
+
 
 def search_online(query: str):
     response = client.search(
@@ -23,8 +26,18 @@ def search_online(query: str):
     
     return summary_text, query
     
-
+@tool
 def online_search(llm, query):
+    """
+    使用在线搜索获取查询的相关信息。
+    
+    Args:
+        llm: 用于处理搜索结果的语言模型
+        query: 要搜索的查询字符串
+    
+    Returns:
+        str: 搜索结果的摘要
+    """
     summary_text, query = search_online(query)
     prompt = f"Question: {query}\n\n{summary_text}\n\nBased on the search results above, please answer the original question."
         

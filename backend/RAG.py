@@ -14,6 +14,7 @@ from parameter_recommendator import parameter_recommendation
 from online_search import online_search
 import json
 from datetime import datetime
+from result_logger import ResultLogger
 
 ################################################################################################################################
 load_dotenv()
@@ -122,24 +123,17 @@ def router_workflow(query: str):
 
     elif next_step == "unknown":
         return "Unknown question type: " + query
-
-# class human_feedback(BaseModel):
-#     is_satisfied: bool = Field(
-#         None, description="Is the answer satisfactory?"
-#     )
-#     new_info: str = Field(
-#         None, description="If not, please provide additional information."
-#     )
-
 ################################################################################################################################
 @entrypoint(checkpointer=MemorySaver())
 def RAG(query):
+    # 初始化结果记录器
+    logger = ResultLogger("rag_logs", llm_openai)
+
+    logger.add_result("Original Query", query)
     # 获取重写后的查询列表
     queries = rewrite_query(query).result()
+    logger.add_result("Rewritten Queries", queries)  # 记录重写后的查询
     
-    # 初始化结果字典
-    workflow_results = {}
-
     # 处理每个查询
     for each_query in queries:
         try:
@@ -147,10 +141,10 @@ def RAG(query):
             workflow_result, is_successful = router_workflow.invoke(each_query, config=config)
             
             # 存储结果
-            workflow_results[each_query] = {
+            logger.add_result(each_query, {
                 "result": workflow_result,
                 "is_successful": is_successful
-            }
+            })
             
             if not is_successful:
                 print(f"\n⚠️ warning: unable to get a valid response for the query: {each_query}")
@@ -158,69 +152,72 @@ def RAG(query):
                 
         except Exception as e:
             print(f"\n⚠️ warning: error occurred when processing the query: {each_query}: {str(e)}")
-            workflow_results[each_query] = {
+            logger.add_result(each_query, {
                 "result": str(e),
                 "is_successful": False
-            }
+            })
             continue
 
-    return workflow_results, all(result["is_successful"] for result in workflow_results.values())
+    # 保存所有结果
+    logger.save_results()
+
+    return
 
 ################################################################################################################################
 
-def log_rag_results(query: str, workflow_results: tuple, llm) -> str:
-    """记录RAG查询和结果到JSON文件
-    Args:
-        query: 原始查询
-        workflow_results: RAG处理的结果元组 (results_dict, is_successful)
-        llm: 使用的语言模型
-    Returns:
-        str: 日志文件路径
-    """
-    log_dir = "rag_logs"
-    os.makedirs(log_dir, exist_ok=True)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M")
-    log_file = os.path.join(log_dir, f"rag_{timestamp}.json")
+# def log_rag_results(query: str, workflow_results: tuple, llm) -> str:
+#     """记录RAG查询和结果到JSON文件
+#     Args:
+#         query: 原始查询
+#         workflow_results: RAG处理的结果元组 (results_dict, is_successful)
+#         llm: 使用的语言模型
+#     Returns:
+#         str: 日志文件路径
+#     """
+#     log_dir = "rag_logs"
+#     os.makedirs(log_dir, exist_ok=True)
+#     timestamp = datetime.now().strftime("%Y%m%d_%H%M")
+#     log_file = os.path.join(log_dir, f"rag_{timestamp}.json")
     
-    results_dict, _ = workflow_results
+#     results_dict, _ = workflow_results
     
-    log_data = {
-        "original_query": query,
-        "rewritten_queries": list(results_dict.keys()),  # 使用结果字典的键作为重写的查询列表
-        "timestamp": timestamp,
-        "model": {
-            "name": llm.__class__.__name__,
-            "model": getattr(llm, 'model', "unknown"),
-            "temperature": getattr(llm, 'temperature', "unknown")
-        },
-        "results": {}
-    }
+#     log_data = {
+#         "original_query": query,
+#         "rewritten_queries": list(results_dict.keys()),  # 使用结果字典的键作为重写的查询列表
+#         "timestamp": timestamp,
+#         "model": {
+#             "name": llm.__class__.__name__,
+#             "model": getattr(llm, 'model', "unknown"),
+#             "temperature": getattr(llm, 'temperature', "unknown")
+#         },
+#         "results": {}
+#     }
     
-    for query_text, query_result in results_dict.items():
-        if isinstance(query_result, dict) and 'result' in query_result:
-            result = query_result['result']
-            if hasattr(result, 'questioned_parameter'):
-                log_data["results"][query_text] = {
-                    "parameter": result.questioned_parameter,
-                    "tool_range": result.tool_range,
-                    "metal_range": result.metal_range if hasattr(result, 'metal_range') else "None",
-                    "combined_range": result.combined_range if hasattr(result, 'combined_range') else result.tool_range,
-                    "thoughts": result.thoughts
-                }
-            else:
-                log_data["results"][query_text] = {
-                    "parameter": "General Information",
-                    "tool_range": "N/A",
-                    "metal_range": "N/A",
-                    "combined_range": "N/A",
-                    "thoughts": str(result)
-                }
+#     for query_text, query_result in results_dict.items():
+#         if isinstance(query_result, dict) and 'result' in query_result:
+#             result = query_result['result']
+#             if hasattr(result, 'questioned_parameter'):
+#                 log_data["results"][query_text] = {
+#                     "parameter": result.questioned_parameter,
+#                     "tool_range": result.tool_range,
+#                     "metal_range": result.metal_range if hasattr(result, 'metal_range') else "None",
+#                     "combined_range": result.combined_range if hasattr(result, 'combined_range') else result.tool_range,
+#                     "thoughts": result.thoughts
+#                 }
+#             else:
+#                 log_data["results"][query_text] = {
+#                     "parameter": "General Information",
+#                     "tool_range": "N/A",
+#                     "metal_range": "N/A",
+#                     "combined_range": "N/A",
+#                     "thoughts": str(result)
+#                 }
     
-    with open(log_file, "w", encoding="utf-8") as f:
-        json.dump(log_data, f, ensure_ascii=False, indent=2)
+#     with open(log_file, "w", encoding="utf-8") as f:
+#         json.dump(log_data, f, ensure_ascii=False, indent=2)
     
-    print(f"\n💾 Results saved to: {log_file}")
-    return log_file
+#     print(f"\n💾 Results saved to: {log_file}")
+#     return log_file
 
 ################################################################################################################################
 if __name__ == "__main__":
@@ -236,13 +233,6 @@ if __name__ == "__main__":
     # 显示流式输出
     for step in RAG.stream(query, config, stream_mode="updates"):
         for _, event in step.items():
-            for message in event:
-                if hasattr(message, 'pretty_print'):
-                    message.pretty_print()
-                else:
-                    print(message)
-    
-    # 记录结果
-    log_file = log_rag_results(query, results, llm)
+            print(event)
 
 

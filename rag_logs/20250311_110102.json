@@ -1,0 +1,12 @@
+{
+    "timestamp": "20250311_110102",
+    "model_info": {
+        "name": "ChatOpenAI",
+        "model_id": "unknown",
+        "temperature": 0.7
+    },
+    "Original Query": "I wanna turn 1.4125 with D60, cut speed? cut depth?",
+    "Rewritten Queries": "[\"What's the cutting speed for turning 1.4125 steel with D60 tool?\", \"What's the cutting depth for turning 1.4125 steel with D60 tool?\"]",
+    "What's the cutting speed for turning 1.4125 steel with D60 tool?": "{'result': Answer(questioned_parameter='Cutting Speed', tool_range='70-170 m/min', metal_range='20-30 m/min', combined_range='conflicted', thoughts='The recommended cutting speed from the tool (D60) source for stainless steel is 70-170 m/min. However, the metal source for 1.4125 steel suggests a much lower cutting speed of 20-30 m/min due to its machinability. As these ranges conflict, it is advisable to use the more conservative speed from the metal source, i.e., 20-30 m/min, to avoid rapid tool wear and ensure successful machining.'), 'is_successful': True}",
+    "What's the cutting depth for turning 1.4125 steel with D60 tool?": "{'result': Answer(questioned_parameter='Cutting Depth', tool_range='None', metal_range='conflicted', combined_range='conflicted', thoughts=\"The metal documentation does not provide specific guidance on cutting depth for 1.4125 steel. The tool documentation also lacks specific recommendations for cutting depth. In such cases, it's suggested to refer to general guidelines for machining similar martensitic stainless steels or consult with tool manufacturers for specific applications. Consider using smaller cutting depths initially and adjust based on machining conditions and tool performance.\"), 'is_successful': True}"
+}

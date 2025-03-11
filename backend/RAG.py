@@ -126,21 +126,21 @@ def router_workflow(query: str):
 ################################################################################################################################
 @entrypoint(checkpointer=MemorySaver())
 def RAG(query):
-    # 初始化结果记录器
+    # initialize the result logger
     logger = ResultLogger("rag_logs", llm_openai)
 
     logger.add_result("Original Query", query)
-    # 获取重写后的查询列表
+    # get the rewritten query list
     queries = rewrite_query(query).result()
-    logger.add_result("Rewritten Queries", queries)  # 记录重写后的查询
+    logger.add_result("Rewritten Queries", queries)  # record the rewritten queries
     
-    # 处理每个查询
+    # process each query
     for each_query in queries:
         try:
-            # 执行处理流程
+            # execute the processing workflow
             workflow_result, is_successful = router_workflow.invoke(each_query, config=config)
             
-            # 存储结果
+            # store the results
             logger.add_result(each_query, {
                 "result": workflow_result,
                 "is_successful": is_successful
@@ -158,7 +158,7 @@ def RAG(query):
             })
             continue
 
-    # 保存所有结果
+    # save all results
     logger.save_results()
 
     return
@@ -166,13 +166,13 @@ def RAG(query):
 ################################################################################################################################
 
 # def log_rag_results(query: str, workflow_results: tuple, llm) -> str:
-#     """记录RAG查询和结果到JSON文件
+#     """record the RAG query and results to the JSON file
 #     Args:
-#         query: 原始查询
-#         workflow_results: RAG处理的结果元组 (results_dict, is_successful)
-#         llm: 使用的语言模型
+#         query: the original query
+#         workflow_results: the tuple of RAG processing results (results_dict, is_successful)
+#         llm: the language model used
 #     Returns:
-#         str: 日志文件路径
+#         str: the path of the log file
 #     """
 #     log_dir = "rag_logs"
 #     os.makedirs(log_dir, exist_ok=True)
@@ -227,10 +227,10 @@ if __name__ == "__main__":
     query = get_valid_query()
     llm = llm_openai
     
-    # 获取完整结果
+    # get the complete results
     results = RAG.invoke(query, config)
     
-    # 显示流式输出
+    # display the streaming output
     for step in RAG.stream(query, config, stream_mode="updates"):
         for _, event in step.items():
             print(event)

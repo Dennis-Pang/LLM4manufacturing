@@ -29,14 +29,14 @@ def search_online(query: str):
 @tool
 def online_search(llm, query):
     """
-    使用在线搜索获取查询的相关信息。
+    use online search to get the related information of the query.
     
     Args:
-        llm: 用于处理搜索结果的语言模型
-        query: 要搜索的查询字符串
+        llm: the language model used to process the search results
+        query: the query string to search
     
     Returns:
-        str: 搜索结果的摘要
+        str: the summary of the search results
     """
     summary_text, query = search_online(query)
     prompt = f"Question: {query}\n\n{summary_text}\n\nBased on the search results above, please answer the original question."

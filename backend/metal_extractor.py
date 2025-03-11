@@ -50,10 +50,10 @@ from rapidfuzz import fuzz
 @task
 def fuzzy_match_metal(query: str, metal_mapping_path=r"backend\mappings\metal_mappings.json", threshold: int = 80):
     """
-    对 metal_data 中的金属名称及其别名进行模糊搜索。
+    fuzzy search for the metal name and its aliases in metal_data.
     
-    :param query: 用户输入的金属字符串，例如 "1.4125", "CCR1150" 等。
-    :param metal_data: 从 JSON 加载的金属数据，格式类似：
+    :param query: the metal string input by the user, for example "1.4125", "CCR1150" etc.
+    :param metal_data: the metal data loaded from the JSON file, the format is like:
         {
           "CHRONIFER M-17C": {
             "aliases": ["1.4125", "AISI 440C", "X105CrMo17", "SUS440C"],
@@ -64,8 +64,8 @@ def fuzzy_match_metal(query: str, metal_mapping_path=r"backend\mappings\metal_ma
             "doc_path": "markdowns/Klein_Metals/1.4125.md"
           }
         }
-    :param threshold: 模糊匹配分数阈值，默认80分。
-    :return: 如果匹配成功，则返回 (主名称, doc_path, 分数)；否则返回 (None, None, 0)。
+    :param threshold: the threshold of fuzzy matching score, default is 80.
+    :return: if the match is successful, return (main name, doc_path, score); otherwise return (None, None, 0).
     """
     best_score = 0
     best_main_name = None
@@ -78,7 +78,7 @@ def fuzzy_match_metal(query: str, metal_mapping_path=r"backend\mappings\metal_ma
     query_norm = query.strip().lower()
 
     for main_name, info in metal_data.items():
-        # 1. 先和主名称做模糊匹配
+        # 1. fuzzy match with the main name
         main_name_norm = main_name.strip().lower()
         score = fuzz.ratio(query_norm, main_name_norm)
         if score > best_score:
@@ -86,7 +86,7 @@ def fuzzy_match_metal(query: str, metal_mapping_path=r"backend\mappings\metal_ma
             best_main_name = main_name
             matched_key = main_name
 
-        # 2. 再与每个别名做匹配
+        # 2. fuzzy match with each alias
         for alias in info.get("aliases", []):
             alias_norm = alias.strip().lower()
             score = fuzz.ratio(query_norm, alias_norm)
@@ -102,13 +102,13 @@ def fuzzy_match_metal(query: str, metal_mapping_path=r"backend\mappings\metal_ma
         return None, None, 0
 
 # if __name__ == "__main__":
-#     # 指定 metal_data 的 JSON 文件路径（建议使用原始字符串或正斜杠）
+#     # specify the JSON file path of metal_data (recommended to use raw string or forward slash)
 #     json_path = r"mappings\metal_mappings.json"
-#     # 或者： json_path = "mappings/metal_mappings.json"
+#     # or: json_path = "mappings/metal_mappings.json"
 
 #     metal_data = load_metal_data(json_path)
 
-#     # 示例用户查询
+#     # example user queries
 #     queries = ["1.4125", "CCR1150", "AIS440C", "M-17C", "foo-bar"]
 #     for q in queries:
 #         main_name, doc_path, score = fuzzy_match_metal(q, metal_data)

@@ -107,7 +107,6 @@ class Answer(BaseModel):
         description="The thoughts and reasoning process for the recommended parameters."
     )
 
-# 定义结果存储字典
 
 
 @task
@@ -134,18 +133,18 @@ def estimate_cutting_parameters(compare_result):
 
 @entrypoint(checkpointer=MemorySaver())
 def main(Q):
-    # 初始化结果记录器
+    # initialize the result logger
     logger = ResultLogger("experiment_results", model)
     
-    # 获取比较结果
+    # get the comparison result
     compare_result = metal_analysis().result()
     logger.add_result("Metal_analysis", compare_result)
     
-    # 获取参数推荐结果
+    # get the parameter recommendation result
     result = estimate_cutting_parameters(compare_result).result()
     logger.add_result("Answer", result)
     
-    # 保存所有结果
+    # save all results
     logger.save_results()
 
     return

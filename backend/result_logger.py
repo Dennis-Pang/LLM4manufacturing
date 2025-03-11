@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 class ResultLogger:
     def __init__(self, results_dir, model):
-        """初始化结果记录器"""
+        """initialize the result logger"""
         self.results = {
             "timestamp": datetime.now().strftime("%Y%m%d_%H%M%S"),
             "model_info": {
@@ -18,7 +18,7 @@ class ResultLogger:
         os.makedirs(self.results_dir, exist_ok=True)
 
     def add_result(self, step_name, result):
-        """添加结果到存储字典"""
+        """add the results to the storage dictionary"""
         if hasattr(result, "model_dump"):
             self.results[step_name] = result.model_dump()
         elif hasattr(result, "content"):

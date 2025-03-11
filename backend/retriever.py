@@ -9,7 +9,7 @@ load_dotenv()
 openai_api_key = os.getenv("OPENAI_API_KEY")
 
 def load_and_get_table(mapping_file, table_id):
-    # 使用 os.path.join 来构建路径
+    # use os.path.join to build the path
     mapping_file_path = os.path.join('backend', 'mappings', 'table_mappings.json')
     
     with open(mapping_file_path, 'r', encoding='utf-8') as f:
@@ -22,11 +22,11 @@ def load_and_get_table(mapping_file, table_id):
         
 def detect_table_markers(text):
     """
-    检测文本中所有表格标记，例如 "__TABLE3__" 返回 [3]
+    detect all table markers in the text, for example "__TABLE3__" returns [3]
     """
-    # 使用正则表达式查找形如 __TABLE\d+__ 的标记
+    # use the regular expression to find the markers like "__TABLE\d+__"
     markers = re.findall(r"__TABLE(\d+)__", text)
-    # 将字符串数字转换为 int
+    # convert the string numbers to int
     return [int(m) for m in markers]
 
 def similarity_search(query: str, 
@@ -36,7 +36,7 @@ def similarity_search(query: str,
     
     filename = os.path.splitext(os.path.basename(file_path))[0]
     
-    # 构建持久化目录和集合名称
+    # build the persistent directory and collection name
     persist_directory = os.path.join("backend\VectorDBs", filename)
     collection_name = f"rag-{filename}"
 
@@ -55,8 +55,8 @@ def similarity_search(query: str,
     
     for i, doc in enumerate(results):
         chunk = doc.page_content
-        print(f"\n🔹 Processing the {i+1}th result:")  # 调试信息
-        print(f"Text content: {chunk[:100]}...")  # 显示前100个字符
+        print(f"\n🔹 Processing the {i+1}th result:")  # debug information
+        print(f"Text content: {chunk[:100]}...")  # display the first 100 characters
         
         markers = detect_table_markers(chunk)
         info = chunk

@@ -51,14 +51,12 @@ def rating(llm, reference: str, query: str):
             **kwargs
         )
     
-    # 首先运行第一个评估
     decision1 = evaluate(evaluator1)
     
-    # 如果第一个评估结果为"not relevant"，直接返回False
     if decision1.judge == "relevant":
-        return True ## 如果第一个评估结果为"relevant"，直接返回True
+        return True ##  if the first evaluation result is "relevant", return True
         
-    # 只有当第一个评估结果为"not relevant"时，才运行第二个评估
+    # only run the second evaluation when the first evaluation result is "not relevant"
     decision2 = evaluate(evaluator2)
     
     return decision2.judge == "relevant"

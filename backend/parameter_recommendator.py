@@ -26,7 +26,7 @@ class Check(BaseModel):
 
 @task
 def factors_check(llm, query):
-    """检查查询中是否包含所有必要因素，并提取金属名称"""
+    """check if the query contains all necessary factors, and extract the metal name"""
     result = llm.with_structured_output(Check).invoke(
         [
             SystemMessage(content="""
@@ -91,7 +91,7 @@ class Answer(BaseModel):
     
 @task
 def parameter_recommendation(llm, query: str):
-    """参数推荐主函数"""
+    """main function of parameter recommendation"""
     llm = llm.bind_tools([online_search])
     check = factors_check(llm, query).result()
     if check.judge == "no":
@@ -103,7 +103,7 @@ def parameter_recommendation(llm, query: str):
 
     _, doc_path, _ = fuzzy_match_metal(metal_name).result()
     
-    # 读取金属文档
+    # read the metal document
     metal_doc = None
     if doc_path:
         try:
@@ -112,18 +112,18 @@ def parameter_recommendation(llm, query: str):
         except FileNotFoundError:
             return f"No metal references found for {metal_name}", False
 
-    # 搜索工具参考
+    # search the tool references
     tool_refs = tool_search(llm, query)
     if tool_refs is None:
         print("No valid tool references found.")
 
-    # 合并参考信息
+    # merge the reference information
     references = [metal_doc] if metal_doc else []
     references.extend(tool_refs or [])
 
     llm = llm.bind_tools([online_search])
     
-    # 创建对话历史列表
+    # create the conversation history list
     messages = [
         SystemMessage(content="""
         You are a manufacturing expert. Your task is to recommend cutting parameters based on metal and tool references.
@@ -186,10 +186,10 @@ def parameter_recommendation(llm, query: str):
         """),
     ]
     
-    # 添加初始查询
+    # add the initial query
     messages.append(HumanMessage(content=f"Query: {query}\nReferences: {references}"))
     
-    # 获取初始回答
+    # get the initial answer
     response = llm.with_structured_output(Answer).invoke(messages)
 
     llm_response =   f"""

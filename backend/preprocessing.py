@@ -49,7 +49,7 @@ def LLM_summary_tables(prompt: str, table_id: int) -> str:
 def replace_tables(md_text, json_path="processed_info\table_mappings.json"):
     table_pattern = re.compile(r"(<table.*?</table>)", re.DOTALL)
     tables = table_pattern.findall(md_text)
-    # 用占位符替换表格，防止误删
+    # replace the tables with placeholders to prevent deletion
     table_mappings = []
     modified_text = md_text
     for i, table in enumerate(tables):
@@ -63,9 +63,9 @@ def replace_tables(md_text, json_path="processed_info\table_mappings.json"):
     return modified_text
 
 def remove_images(md_text):
-    """去除 Markdown 图片（![alt](url) 和 <img>）"""
-    md_text = re.sub(r'!\[.*?\]\(.*?\)', '', md_text)  # 删除 ![描述](url)
-    md_text = re.sub(r'<img.*?>', '', md_text)  # 删除 <img> 标签
+    """remove the images (![alt](url) and <img>)"""
+    md_text = re.sub(r'!\[.*?\]\(.*?\)', '', md_text)  # delete ![description](url)
+    md_text = re.sub(r'<img.*?>', '', md_text)  # delete <img> tags
     return md_text
 
 

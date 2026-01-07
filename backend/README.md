@@ -2,220 +2,339 @@
 
 An intelligent manufacturing parameter recommendation system built on LangChain and LangGraph, capable of intelligently recommending cutting parameters based on user queries.
 
-## The README.md is mostly AI-generated then checked by me, will keep updating
+## 🎉 Recent Updates
+
+**v2.0 - Restructured Architecture** (Latest)
+- ✅ Modular design with clear separation of concerns
+- ✅ Configurable system prompts
+- ✅ Type-safe Pydantic models
+- ✅ Simplified agent architecture
+- ✅ Enhanced maintainability and extensibility
 
 ## 🌟 Features
 
 - Intelligent routing for different types of queries
 - Smart metal material matching and parameter recommendations
 - Tool parameter filtering and recommendations
-- User feedback support and answer optimization
 - Vector database-powered similarity search
+- Dual-evaluator relevance rating system
+- Structured output with comprehensive logging
+
+## 📁 Project Structure
+
+```
+backend/
+├── config/              # Configuration management
+│   ├── llm_config.py           # LLM configurations (OpenAI, Anthropic, DeepSeek)
+│   └── prompts/                # System prompt templates
+│       ├── query_rewrite.py
+│       ├── factor_check.py
+│       ├── parameter_recommend.py
+│       └── relevance_rating.py
+│
+├── models/              # Pydantic models for structured output
+│   ├── query_models.py         # NewQueries, Route
+│   └── recommendation_models.py # Check, Answer, Feedback
+│
+├── data_processing/     # Data preprocessing and vectorization
+│   ├── preprocessing.py        # Document preprocessing, table summarization
+│   └── vectorization.py        # Smart chunking, vector DB creation
+│
+├── retrieval/          # Retrieval components
+│   ├── vector_store.py         # ChromaDB vector store operations
+│   ├── metal_matcher.py        # Fuzzy metal matching
+│   ├── tool_retriever.py       # Tool reference retrieval
+│   └── relevance_rater.py      # Dual-evaluator rating system
+│
+├── agents/             # Core agent logic
+│   ├── query_agent.py          # Query rewriting and routing
+│   └── recommendation_agent.py # Parameter recommendation
+│
+├── workflows/          # Workflow orchestration
+│   └── rag_workflow.py         # Main RAG pipeline
+│
+├── utils/              # Utility functions
+│   └── logger.py               # Result logging
+│
+├── legacy/             # Deprecated code (archived)
+│   ├── online_search.py
+│   ├── experiment.py
+│   └── battlefield.py
+│
+└── main.py             # Entry point
+```
 
 ## 🔄 Main Workflow
 
 ```mermaid
 flowchart TD
     %% Initial Query Processing
-    Start[User Query] --> LLM1[LLM Query Rewrite]
-    LLM1 --> Router[Query Router]
-    Router --> |Other Types| Other[Other Processing Flows]
+    Start[User Query] --> LLM1[Query Rewrite Agent]
+    LLM1 --> Router[Query Router Agent]
     Router --> |Parameter Recommendation| B[Factor Check]
-    Router --> |Web Search| WebSearch[Web Search]
-    
-    WebSearch --> WebAPI[Search API Call]
-    WebAPI --> WebResults[Filter Results]
-    WebResults --> WebSummary[Summarize Information]
-    WebSummary --> X[Final Response]
-    
+    Router --> |Other Types| Other[Not Implemented]
+
     B -->|Missing Factors| C[Request More Info]
     B -->|Complete| D[Parallel Processing]
-    
+
     %% Metal Processing Branch
-    D --> F[Metal Extraction]
+    D --> F[Metal Extractor]
     F --> G[Fuzzy Match]
-    G --> H[(Metal Database)]
+    G --> H[(Metal Mappings)]
     H --> I[Load Metal Doc]
-    
+
     %% Tool Processing Branch
-    D --> J[Tool Search]
-    J --> K[(VectorDB)]
-    
+    D --> J[Tool Retriever]
+    J --> K[(Vector DB)]
+
     %% Chunk Processing
-    K -- Embedding search --> L[5 Chunks]
-    L --> M["Dual LLM Evaluation (√/×)"]
-    M -- Accepted --> N[Aggregate Accepted Chunks]
-    N --> Q{Evaluation}
+    K -- Embedding search --> L[Top 5 Chunks]
+    L --> M["Dual Evaluator (√/×)"]
+    M -- Relevant --> N[Aggregate References]
+    N --> Q{Relevance Check}
     Q -->|Tool & Operation Match| R[Keep Reference]
     Q -->|No Match| S[Discard]
-    
-    %% Parameter Generation and Response
-    I --> T[Parameter Generation]
-    R --> T
-    T --> U[Initial Response]
-    U --> V{User Feedback}
-    V -->|Not Satisfied| W[Supplementary Info]
-    W --> U
-    V -->|Satisfied| X[Final Response]
 
+    %% Parameter Generation and Response
+    I --> T[Parameter Recommendation Agent]
+    R --> T
+    T --> U[Structured Answer]
+    U --> V[Log Results]
+    V --> X[Final Response]
 ```
+
 ## 🤖 Component Details
 
-### 1. Query Router (RAG.py)
-- **Input**: Raw user query
-- **Process**: 
-  - Analyzes query content
-  - Classifies into predefined types
-- **Output**: Query type and routing decision
-- **Types**:
-  ```python
-  QUESTION_TYPES = [
-      "parameter_recommendation",
-      "picture_reference",
-      "web_search",
-      "unknown"
-  ]
-  ```
+### 1. Query Processing (agents/query_agent.py)
 
-### 2. Parameter Recommender (parameter_recommendator.py)
-- **Input**: Classified parameter query
-- **Process Steps**:
-  1. Factor Completeness Check
-     - Operation type
-     - Metal/Material
-     - Tool specification
-     - Required parameters
-  2. Metal Information Processing
-     - Extract metal name
-     - Fuzzy match with database
-     - Load relevant documentation
-  3. Tool Reference Processing
-     - Search relevant tool info
-     - Rate reference relevance
-     - Filter applicable references
-  4. Parameter Generation
-     - Analyze metal properties
-     - Consider tool requirements
-     - Generate combined recommendations
-- **Output**: Structured parameter recommendations
+**Query Rewriting**
+- Splits multi-parameter queries into individual queries
+- Improves retrieval effectiveness
+- Returns: `List[str]` of rewritten queries
 
-### 3. Metal Extractor (metal_extractor.py)
-- **Input**: Query text
-- **Process**:
-  ```python
-  # Metal extraction rules
-  1. Specific codes (e.g., CCR-1150, TI-64)
-  2. Generic metals (e.g., titanium alloy)
-  3. Priority to specific codes
-  4. Fuzzy matching with threshold 80
-  ```
-- **Output**: 
-  - Metal name
-  - Document path
-  - Similarity score
+**Query Routing**
+- Routes to appropriate handler
+- Types: `parameter_recommendation`, `document_extraction`, `online_search`, `unknown`
+- Returns: Route decision
 
-### 4. Tool Search (tool_extrator.py)
-- **Input**: Query and tool references
-- **Process**:
-  1. Vector similarity search
-  2. Reference relevance rating
-  3. Filtering based on:
-     - Tool name match
-     - Operation type match
-- **Output**: Filtered relevant tool references
+### 2. Parameter Recommendation (agents/recommendation_agent.py)
 
-### 5. Rating System (rater.py)
-- **Input**: Reference and query
-- **Evaluation Criteria**:
-  ```python
-  1. Tool name matching
-  2. Operation type matching
-  3. Ignore material specifications
-  ```
-- **Output**: Relevance decision with reasoning
+**Factor Check**
+- Validates query completeness
+- Extracts:
+  - Operation type (turning, milling, etc.)
+  - Metal/Material
+  - Tool specification
+  - Questioned parameters
+- Returns: `Check` model
 
-### 6. Retrieval System (retriever.py)
-- **Input**: Search query
-- **Features**:
-  - Vector database management
-  - Table data processing
-  - Document chunking
-- **Output**: Relevant document chunks
+**Parameter Recommendation**
+- Metal document retrieval via fuzzy matching
+- Tool reference retrieval via vector search
+- Dual-source parameter integration
+- Conflict resolution
+- Returns: `Answer` model with structured recommendations
 
-## 🔄 Feedback Loop Process
+### 3. Retrieval System (retrieval/)
 
-1. **Initial Response Generation**
-   ```python
-   result = router_workflow.invoke(query, config=config)
-   ```
+**Vector Store (vector_store.py)**
+- ChromaDB-based similarity search
+- Table content restoration
+- Returns: Top-k relevant chunks
 
-2. **Feedback Collection**
-   ```python
-   feedback = human_feedback().result()["feedback"]
-   ```
+**Metal Matcher (metal_matcher.py)**
+- Fuzzy matching with RapidFuzz
+- Threshold: 80
+- Supports main names and aliases
+- Returns: `(metal_name, doc_path, score)`
 
-3. **Response Optimization**
-   - Maximum 3 iterations
-   - Incorporates new information
-   - Maintains context continuity
+**Tool Retriever (tool_retriever.py)**
+- Vector search for tool references
+- Relevance filtering
+- Returns: Filtered relevant references
+
+**Relevance Rater (relevance_rater.py)**
+- Dual-evaluator system
+- Primary: User-specified LLM
+- Secondary: Claude Haiku (fallback)
+- Focus: Tool name, operation, parameters (ignores material)
+- Returns: `bool`
+
+### 4. Data Processing (data_processing/)
+
+**Preprocessing (preprocessing.py)**
+- Image removal
+- Table summarization via LLM
+- Table placeholder replacement
+- Returns: Cleaned markdown
+
+**Vectorization (vectorization.py)**
+- Smart chunking (preserves table integrity)
+- Token-based splitting (max 1000 tokens)
+- ChromaDB creation
+- Returns: Persistent vector database
+
+### 5. Workflow Orchestration (workflows/rag_workflow.py)
+
+**Process Single Query**
+- Routes query to appropriate handler
+- Executes parameter recommendation
+- Returns: `(response, is_successful)`
+
+**RAG Pipeline**
+- Query rewriting
+- Multi-query processing
+- Result logging
+- Returns: Comprehensive results log
+
+## 🔧 Configuration
+
+### LLM Configuration (config/llm_config.py)
+
+```python
+# Available LLMs
+llm_openai      # GPT-4o (default)
+llm_anthropic   # Claude 3.7 Sonnet
+llm_deepseek    # DeepSeek Chat
+```
+
+### System Prompts (config/prompts/)
+
+All system prompts are centralized and configurable:
+- `query_rewrite.py` - Query rewriting instructions
+- `factor_check.py` - Factor validation rules
+- `parameter_recommend.py` - Parameter recommendation logic
+- `relevance_rating.py` - Relevance evaluation criteria
 
 ## 🛠️ Tech Stack
 
-- LangChain: Workflow management
-- LangGraph: Agent orchestration
-- OpenAI GPT-4: Language processing
-- ChromaDB: Vector storage
-- Pydantic: Data validation
-- RapidFuzz: Fuzzy matching
-- Tavily: Web search API
+- **LangChain**: Workflow management
+- **LangGraph**: Agent orchestration
+- **OpenAI GPT-4o**: Language processing
+- **Anthropic Claude**: Alternative LLM & dual evaluation
+- **DeepSeek**: Alternative LLM
+- **ChromaDB**: Vector storage
+- **Pydantic**: Data validation
+- **RapidFuzz**: Fuzzy matching
+- **tiktoken**: Token counting
 
+## 📝 Usage
 
-## 📝 Usage Example
-```python
-from RAG import RAG
-# Create query
-query = "What's the cutting speed for turning 1.4125 with D10?"
-# Execute workflow
-result = RAG.invoke(query, config={
-"configurable": {
-"thread_id": "unique_id"
-}
-})
+### Installation
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
 ```
 
-### Query Example
+### Running the System
+
+```python
+# Simple usage
+python main.py
+
+# Programmatic usage
+from config import llm_openai
+from workflows import rag_pipeline
+
+query = "What's the cutting speed for turning 1.4125 with D10?"
+config = {"configurable": {"thread_id": "unique_id"}}
+
+rag_pipeline.invoke((llm_openai, query), config=config)
+```
+
+### Using Different LLMs
+
+```python
+from config import llm_openai, llm_anthropic, llm_deepseek
+from workflows import rag_pipeline
+
+# OpenAI GPT-4o (default)
+rag_pipeline.invoke((llm_openai, query), config=config)
+
+# Anthropic Claude
+rag_pipeline.invoke((llm_anthropic, query), config=config)
+
+# DeepSeek
+rag_pipeline.invoke((llm_deepseek, query), config=config)
+```
+
+### Data Preprocessing
+
+```python
+from data_processing import preprocess_document, create_vector_db
+
+# Preprocess document
+preprocess_document(
+    input_path="pdfs/document.md",
+    output_path="washed_documents/document.md"
+)
+
+# Create vector database
+create_vector_db("washed_documents/document.md")
+```
+
+## 💡 Query Example
+
+**Input:**
 ```
 I wanna machine 1.4125 with D10, cutting speed?
 ```
 
-### System Response
+**System Response:**
 ```
-Recommendations:
-
-- Cutting Speed for 1.4125 Steel with D10 Tool:
-  - Metal Source: 20-30 m/min
-  - Tool Source: 60-120 m/min
-
-Reasoning: The metal source suggests a cutting speed of 20-30 m/min for 1.4125 steel, which is a martensitic stainless steel with high hardness and wear resistance, making it difficult to machine. The tool source, however, recommends a higher range of 60-120 m/min for stainless steel using a D10 tool. Due to the conflicting ranges, both are presented, and the more conservative metal source range should be considered to ensure tool longevity and prevent excessive wear.
+🔍 Questioned parameter: cutting speed
+🔧 Metal's source: 20-30 m/min
+🛠️  Tool's source: 60-120 m/min
+🎯 Combined range: Conflicted - see both sources
+💭 RagBot's thoughts: The metal source suggests 20-30 m/min for 1.4125
+   martensitic stainless steel due to its high hardness. The tool source
+   recommends 60-120 m/min for stainless steel with D10. Consider the
+   conservative metal source range for tool longevity.
 ```
 
 ## 🛠️ Environment Setup
 
-1. Create `.env` file:
-   ```   OPENAI_API_KEY=your_api_key_here
-   ```
+### 1. Create `.env` file:
+```bash
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key  # Optional
+DEEPSEEK_API_KEY=your_deepseek_key    # Optional
+```
 
-2. Required directory structure:
-   ```
-   project/
-   ├── mappings/
-   │   ├── metal_mappings.json
-   │   └── table_mappings.json
-   ├── VectorDBs/
-   ├── washed_documents/
-   └── markdowns/
-   ```
+### 2. Required directory structure:
+```
+backend/
+├── mappings/
+│   ├── metal_mappings.json
+│   └── table_mappings.json
+├── VectorDBs/
+├── washed_documents/
+└── markdowns/
+```
 
+## 📚 Documentation
 
+- **RESTRUCTURE_GUIDE.md** - Detailed restructuring guide
+- **RESTRUCTURE_SUMMARY.md** - Restructuring summary
 
+## 🎯 Design Principles
 
+1. **Modular Architecture** - Clear separation of concerns
+2. **Configuration over Code** - Prompts and configs externalized
+3. **Type Safety** - Pydantic models for structured outputs
+4. **Simplicity** - No over-engineering, straightforward functions
+5. **Extensibility** - Easy to add new features and workflows
+
+## 🚧 Future Enhancements
+
+- [ ] Web-based UI
+- [ ] REST API endpoints
+- [ ] Multi-language support
+- [ ] Enhanced caching
+- [ ] Batch processing
+- [ ] Performance monitoring
+
+## 📄 License
+
+This project is for research and educational purposes.

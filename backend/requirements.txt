@@ -1,0 +1,19 @@
+# LLM Providers
+langchain
+langchain-openai
+langchain-anthropic
+langchain-community
+langchain-deepseek
+langgraph
+
+# Vector Store
+chromadb
+
+# Utilities
+python-dotenv
+pydantic
+rapidfuzz
+tiktoken
+
+# Optional (for legacy code)
+# tavily-python  # online search (moved to legacy)
